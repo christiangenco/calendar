@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo } from "react";
 import {
   format,
   addWeeks,
@@ -14,65 +14,70 @@ import {
   isThisWeek,
   parseISO,
   formatDistanceToNow,
-} from "date-fns"
-import { useLocalStorage } from "@/hooks/use-local-storage"
-import { YearNote } from "./year-note"
-import { extractFirstEmoji, containsNumbers } from "@/utils/emoji"
+} from "date-fns";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { YearNote } from "./year-note";
+import { extractFirstEmoji, containsNumbers } from "@/utils/emoji";
 
 interface HighlightInfo {
-  date: Date
-  title?: string
+  date: Date;
+  title?: string;
 }
 
 interface YearNoteType {
-  year: number
-  note: string
+  year: number;
+  note: string;
 }
 
 interface CalendarProps {
-  initialStartDate: Date
-  initialEndDate: Date
+  initialStartDate: Date;
+  initialEndDate: Date;
 }
 
 export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
   // Use localStorage to persist data
   const [startDate, setStartDate] = useLocalStorage<string>(
     "calendar-start-date",
-    initialStartDate.toISOString().split("T")[0],
-  )
-  const [endDate, setEndDate] = useLocalStorage<string>("calendar-end-date", initialEndDate.toISOString().split("T")[0])
-  const [highlightedDates, setHighlightedDates] = useLocalStorage<{ date: string; title?: string }[]>(
-    "calendar-highlighted-dates",
-    [],
-  )
-  const [yearNotes, setYearNotes] = useLocalStorage<YearNoteType[]>("calendar-year-notes", [])
+    initialStartDate.toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useLocalStorage<string>(
+    "calendar-end-date",
+    initialEndDate.toISOString().split("T")[0]
+  );
+  const [highlightedDates, setHighlightedDates] = useLocalStorage<
+    { date: string; title?: string }[]
+  >("calendar-highlighted-dates", []);
+  const [yearNotes, setYearNotes] = useLocalStorage<YearNoteType[]>(
+    "calendar-year-notes",
+    []
+  );
 
   const [yearData, setYearData] = useState<
     Map<
       number,
       {
         weeks: {
-          date: Date
-          isHighlighted: boolean
-          highlightTitle?: string
-          emoji?: string | null
-          hasNumbers: boolean
-          isPlaceholder: boolean
-          isFuture: boolean
-          isCurrentWeek: boolean
-        }[]
-        note?: string
+          date: Date;
+          isHighlighted: boolean;
+          highlightTitle?: string;
+          emoji?: string | null;
+          hasNumbers: boolean;
+          isPlaceholder: boolean;
+          isFuture: boolean;
+          isCurrentWeek: boolean;
+        }[];
+        note?: string;
       }
     >
-  >(new Map())
-  const [years, setYears] = useState<number[]>([])
+  >(new Map());
+  const [years, setYears] = useState<number[]>([]);
 
   // Get current date for input constraints
-  const today = useMemo(() => new Date().toISOString().split("T")[0], [])
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   // Memoize parsed dates to prevent recreation on each render
-  const parsedStartDate = useMemo(() => parseISO(startDate), [startDate])
-  const parsedEndDate = useMemo(() => parseISO(endDate), [endDate])
+  const parsedStartDate = useMemo(() => parseISO(startDate), [startDate]);
+  const parsedEndDate = useMemo(() => parseISO(endDate), [endDate]);
 
   // Memoize parsed highlighted dates to prevent recreation on each render
   const parsedHighlightedDates = useMemo(
@@ -83,8 +88,8 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
         emoji: extractFirstEmoji(h.title),
         hasNumbers: containsNumbers(h.title),
       })),
-    [highlightedDates],
-  )
+    [highlightedDates]
+  );
 
   // Generate calendar data when dependencies change
   useEffect(() => {
@@ -92,30 +97,34 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
       number,
       {
         weeks: {
-          date: Date
-          isHighlighted: boolean
-          highlightTitle?: string
-          emoji?: string | null
-          hasNumbers: boolean
-          isPlaceholder: boolean
-          isFuture: boolean
-          isCurrentWeek: boolean
-        }[]
-        note?: string
+          date: Date;
+          isHighlighted: boolean;
+          highlightTitle?: string;
+          emoji?: string | null;
+          hasNumbers: boolean;
+          isPlaceholder: boolean;
+          isFuture: boolean;
+          isCurrentWeek: boolean;
+        }[];
+        note?: string;
       }
-    >()
-    const uniqueYears = new Set<number>()
+    >();
+    const uniqueYears = new Set<number>();
 
     // Initialize all years in the range
-    for (let year = getYear(parsedStartDate); year <= getYear(parsedEndDate); year++) {
-      uniqueYears.add(year)
+    for (
+      let year = getYear(parsedStartDate);
+      year <= getYear(parsedEndDate);
+      year++
+    ) {
+      uniqueYears.add(year);
 
       // Create 52 placeholder weeks for each year
-      const yearStart = new Date(year, 0, 1)
+      const yearStart = new Date(year, 0, 1);
       const placeholderWeeks = Array(52)
         .fill(null)
         .map((_, i) => {
-          const weekDate = addWeeks(yearStart, i)
+          const weekDate = addWeeks(yearStart, i);
           return {
             date: weekDate,
             isHighlighted: false,
@@ -125,33 +134,33 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
             isPlaceholder: true,
             isFuture: isFuture(weekDate),
             isCurrentWeek: isThisWeek(weekDate),
-          }
-        })
+          };
+        });
 
       yearMap.set(year, {
         weeks: placeholderWeeks,
         note: yearNotes.find((n) => n.year === year)?.note,
-      })
+      });
     }
 
     // Fill in actual weeks
-    let currentDate = startOfWeek(parsedStartDate, { weekStartsOn: 1 })
+    let currentDate = startOfWeek(parsedStartDate, { weekStartsOn: 1 });
 
     while (currentDate <= parsedEndDate) {
-      const year = getYear(currentDate)
-      const yearStart = startOfYear(new Date(year, 0, 1))
-      const weekIndex = differenceInWeeks(currentDate, yearStart)
+      const year = getYear(currentDate);
+      const yearStart = startOfYear(new Date(year, 0, 1));
+      const weekIndex = differenceInWeeks(currentDate, yearStart);
 
       // Check if this week contains any of the highlighted dates
       const highlightInfo = parsedHighlightedDates.find((info) =>
         isWithinInterval(info.date, {
           start: currentDate,
           end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-        }),
-      )
+        })
+      );
 
       // Update the week data
-      const yearData = yearMap.get(year)
+      const yearData = yearMap.get(year);
       if (yearData && weekIndex >= 0 && weekIndex < 52) {
         yearData.weeks[weekIndex] = {
           date: currentDate,
@@ -162,75 +171,80 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
           isPlaceholder: false,
           isFuture: isFuture(currentDate),
           isCurrentWeek: isThisWeek(currentDate),
-        }
+        };
       }
 
-      currentDate = addWeeks(currentDate, 1)
+      currentDate = addWeeks(currentDate, 1);
     }
 
-    setYearData(yearMap)
-    setYears(Array.from(uniqueYears).sort())
-  }, [parsedStartDate, parsedEndDate, parsedHighlightedDates, yearNotes])
+    setYearData(yearMap);
+    setYears(Array.from(uniqueYears).sort());
+  }, [parsedStartDate, parsedEndDate, parsedHighlightedDates, yearNotes]);
 
   const handleWeekClick = (date: Date) => {
     // Find the highlighted date that corresponds to this week
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-    const weekEnd = endOfWeek(date, { weekStartsOn: 1 })
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
 
     // First try to find an exact match in the highlighted dates
-    let dateStr = ""
-    let existingHighlight = null
+    let dateStr = "";
+    let existingHighlight = null;
 
     // Check if any highlighted date falls within this week
     for (const highlight of highlightedDates) {
-      const highlightDate = parseISO(highlight.date)
+      const highlightDate = parseISO(highlight.date);
       if (isWithinInterval(highlightDate, { start: weekStart, end: weekEnd })) {
-        dateStr = highlight.date
-        existingHighlight = highlight
-        break
+        dateStr = highlight.date;
+        existingHighlight = highlight;
+        break;
       }
     }
 
     // If no match found, use the week start date
     if (!dateStr) {
-      dateStr = weekStart.toISOString().split("T")[0]
+      dateStr = weekStart.toISOString().split("T")[0];
     }
 
-    const title = window.prompt("Enter a label for this week:", existingHighlight?.title || "")
+    const title = window.prompt(
+      "Enter a label for this week:",
+      existingHighlight?.title || ""
+    );
 
     if (title === null) {
       // User cancelled the prompt
-      return
+      return;
     }
 
     if (title === "") {
       // Remove the highlight if title is empty
-      setHighlightedDates(highlightedDates.filter((h) => h.date !== dateStr))
+      setHighlightedDates(highlightedDates.filter((h) => h.date !== dateStr));
     } else if (existingHighlight) {
       // Update existing highlight
-      setHighlightedDates(highlightedDates.map((h) => (h.date === dateStr ? { ...h, title } : h)))
+      setHighlightedDates(
+        highlightedDates.map((h) => (h.date === dateStr ? { ...h, title } : h))
+      );
     } else {
       // Add new highlight
-      setHighlightedDates([...highlightedDates, { date: dateStr, title }])
+      setHighlightedDates([...highlightedDates, { date: dateStr, title }]);
     }
-  }
+  };
 
   const handleYearNoteChange = (year: number, note: string) => {
     if (note) {
       // Update or add note
-      const existingNoteIndex = yearNotes.findIndex((n) => n.year === year)
+      const existingNoteIndex = yearNotes.findIndex((n) => n.year === year);
       if (existingNoteIndex >= 0) {
-        const updatedNotes = [...yearNotes]
-        updatedNotes[existingNoteIndex] = { year, note }
-        setYearNotes(updatedNotes)
+        const updatedNotes = [...yearNotes];
+        updatedNotes[existingNoteIndex] = { year, note };
+        setYearNotes(updatedNotes);
       } else {
-        setYearNotes([...yearNotes, { year, note }])
+        setYearNotes([...yearNotes, { year, note }]);
       }
     } else {
       // Remove note if empty
-      setYearNotes(yearNotes.filter((n) => n.year !== year))
+      setYearNotes(yearNotes.filter((n) => n.year !== year));
     }
-  }
+  };
 
   return (
     <div>
@@ -257,38 +271,59 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
       <div className="flex justify-center">
         <div className="w-full max-w-4xl">
           {years.map((year) => {
-            const data = yearData.get(year)
-            if (!data) return null
+            const data = yearData.get(year);
+            if (!data) return null;
 
             return (
               <div key={year} className="flex items-center h-3 mb-0.5">
-                <div className="font-mono text-xs w-16 flex-shrink-0 text-right pr-2 dark:text-gray-400">{year}</div>
+                <div className="font-mono text-xs w-16 flex-shrink-0 text-right pr-2 dark:text-gray-400">
+                  {year}
+                </div>
                 <div className="flex flex-grow items-center justify-center">
                   {data.weeks.map((week, index) => {
                     // Determine if we should show an emoji
-                    const showEmoji = week.emoji && !week.isPlaceholder
+                    const showEmoji = week.emoji && !week.isPlaceholder;
 
                     return (
                       <div
                         key={index}
                         className={`
-                          ${showEmoji ? "bg-transparent" : week.isHighlighted ? "bg-black dark:bg-white" : "bg-gray-200 dark:bg-gray-700"} 
+                          ${
+                            showEmoji
+                              ? "bg-transparent"
+                              : week.isHighlighted
+                              ? "bg-black dark:bg-white"
+                              : "bg-gray-200 dark:bg-gray-700"
+                          }
                           ${week.isPlaceholder ? "opacity-0" : "opacity-100"}
                           ${week.isFuture ? "opacity-50" : ""}
-                          ${week.isCurrentWeek ? "animate-[pulse_1s_ease-in-out_infinite]" : ""}
+                          ${
+                            week.isCurrentWeek
+                              ? "animate-[pulse_1s_ease-in-out_infinite]"
+                              : ""
+                          }
                           w-3 h-3
                           mr-0.5
                           relative
                           group
                           cursor-pointer
                           flex items-center justify-center
-                          overflow-hidden
-                          ${!showEmoji && week.isHighlighted ? "text-white dark:text-black" : "text-black dark:text-white"}
+
+                          ${
+                            !showEmoji && week.isHighlighted
+                              ? "text-white dark:text-black"
+                              : "text-black dark:text-white"
+                          }
                         `}
-                        onClick={() => !week.isPlaceholder && handleWeekClick(week.date)}
+                        onClick={() =>
+                          !week.isPlaceholder && handleWeekClick(week.date)
+                        }
                       >
                         {showEmoji && (
-                          <span className="text-[18px] leading-none transform scale-50" aria-hidden="true">
+                          <span
+                            className="text-[18px] leading-none transform scale-50"
+                            aria-hidden="true"
+                          >
                             {week.emoji}
                           </span>
                         )}
@@ -303,20 +338,28 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
                               ? `in ${formatDistanceToNow(week.date)}`
                               : `${formatDistanceToNow(week.date)} ago`}
                           </div>
-                          {week.highlightTitle && <div className="font-bold mt-1">{week.highlightTitle}</div>}
+                          {week.highlightTitle && (
+                            <div className="font-bold mt-1">
+                              {week.highlightTitle}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
                 <div className="ml-2 w-48 flex-shrink-0">
-                  <YearNote year={year} initialNote={data.note || ""} onChange={handleYearNoteChange} />
+                  <YearNote
+                    year={year}
+                    initialNote={data.note || ""}
+                    onChange={handleYearNoteChange}
+                  />
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }
