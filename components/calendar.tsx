@@ -329,7 +329,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
                         )}
 
                         <div
-                          className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 shadow-md pointer-events-none"
+                          className="absolute bottom-full left-1/2 transform -translate-x-1/2 text-black dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 shadow-md pointer-events-none"
                           style={{ marginBottom: "0.25rem" }}
                         >
                           <div>Week of {format(week.date, "MMM d, yyyy")}</div>
