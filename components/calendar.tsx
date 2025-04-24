@@ -18,6 +18,7 @@ import {
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { YearNote } from "./year-note";
 import { extractFirstEmoji, containsNumbers } from "@/utils/emoji";
+import { extractHexColor } from "@/utils/color";
 
 interface HighlightInfo {
   date: Date;
@@ -65,6 +66,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
           isPlaceholder: boolean;
           isFuture: boolean;
           isCurrentWeek: boolean;
+          backgroundColor: string | null;
         }[];
         note?: string;
       }
@@ -87,6 +89,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
         title: h.title,
         emoji: extractFirstEmoji(h.title),
         hasNumbers: containsNumbers(h.title),
+        hexColor: extractHexColor(h.title),
       })),
     [highlightedDates]
   );
@@ -105,6 +108,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
           isPlaceholder: boolean;
           isFuture: boolean;
           isCurrentWeek: boolean;
+          backgroundColor: string | null;
         }[];
         note?: string;
       }
@@ -134,6 +138,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
             isPlaceholder: true,
             isFuture: isFuture(weekDate),
             isCurrentWeek: isThisWeek(weekDate),
+            backgroundColor: null,
           };
         });
 
@@ -145,6 +150,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
 
     // Fill in actual weeks
     let currentDate = startOfWeek(parsedStartDate, { weekStartsOn: 1 });
+    let currentBackgroundColor: string | null = null;
 
     while (currentDate <= parsedEndDate) {
       const year = getYear(currentDate);
@@ -159,6 +165,11 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
         })
       );
 
+      // Update the background color if this week has one
+      if (highlightInfo?.hexColor) {
+        currentBackgroundColor = highlightInfo.hexColor;
+      }
+
       // Update the week data
       const yearData = yearMap.get(year);
       if (yearData && weekIndex >= 0 && weekIndex < 52) {
@@ -171,6 +182,7 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
           isPlaceholder: false,
           isFuture: isFuture(currentDate),
           isCurrentWeek: isThisWeek(currentDate),
+          backgroundColor: currentBackgroundColor,
         };
       }
 
@@ -284,13 +296,27 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
                     // Determine if we should show an emoji
                     const showEmoji = week.emoji && !week.isPlaceholder;
 
+                    // Determine background style
+                    const weekStyle: React.CSSProperties = {};
+                    if (week.backgroundColor && !showEmoji) {
+                      weekStyle.backgroundColor = week.backgroundColor;
+                    }
+
                     return (
                       <div
                         key={index}
                         className={`
+                          w-3 h-3
+                          mr-0.5
+                          relative
+                          group
+                          cursor-pointer
+                          flex items-center justify-center
                           ${
                             showEmoji
                               ? "bg-transparent"
+                              : week.backgroundColor
+                              ? ""
                               : week.isHighlighted
                               ? "bg-black dark:bg-white"
                               : "bg-gray-200 dark:bg-gray-700"
@@ -302,19 +328,8 @@ export function Calendar({ initialStartDate, initialEndDate }: CalendarProps) {
                               ? "animate-[pulse_1s_ease-in-out_infinite]"
                               : ""
                           }
-                          w-3 h-3
-                          mr-0.5
-                          relative
-                          group
-                          cursor-pointer
-                          flex items-center justify-center
-
-                          ${
-                            !showEmoji && week.isHighlighted
-                              ? "text-white dark:text-black"
-                              : "text-black dark:text-white"
-                          }
                         `}
+                        style={weekStyle}
                         onClick={() =>
                           !week.isPlaceholder && handleWeekClick(week.date)
                         }
